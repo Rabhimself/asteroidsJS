@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+
+    <canvas id="theCanvas"></canvas>
+    <script src="jquery.js"></script>
+    <script type="text/javascript">
+        var canvas = document.getElementById("theCanvas");
+        var ctx = canvas.getContext("2d");
+        var bodies = [];
+
+        init();
+        step();
+
+        function init() {
+            console.log("init called");
+            canvas.height = 800;
+            canvas.width = 600;
+            playerShip = new Ship();
+            bodies.push(playerShip);
+        }
+
+        function Ship() {
+            this.pos = {
+                    x: 50,
+                    y: 50
+                },
+                this.velocity = {
+                    x: 0,
+                    y: 0
+                },
+                this.acceleration = {
+                    x: 0,
+                    y: 0
+                },
+                this.angle = 0,
+                this.draw = function () {
+                    ctx.save();
+                    ctx.strokeStyle = "black";
+                    ctx.translate(this.pos.x, this.pos.y);
+                    ctx.rotate(this.angle * Math.PI / 180);
+                    ctx.beginPath();
+                    ctx.moveTo(10, 0);
+                    ctx.lineTo(-10, 5);
+                    ctx.lineTo(-5, 0);
+                    ctx.lineTo(-10, -5);
+                    ctx.lineTo(10, 0);
+                    ctx.stroke();
+                    ctx.closePath();
+                    ctx.restore();
+                },
+                this.move = function () {
+                    this.velocity.x += this.acceleration.x;
+
+                }
+        }
+        $(document).on("keydown", function () {
+            if (event.which == 87) {
+                //get future position via facing and add accel to both x/y
+            }
+            if (event.which == 65) {
+                bodies[0].angle -= 5;
+            }
+            if (event.which == 88) {
+                //get future position via facing and add accel to both x/y
+            }
+            if (event.which == 68) {
+                bodies[0].angle += 5;
+            }
+
+        });
+
+        function step() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            for (var i in bodies) {
+                bodies[i].move();
+                bodies[i].draw();
+            }
+            window.requestAnimationFrame(step);
+        }
+    </script>
+</body>
+
+</html>
