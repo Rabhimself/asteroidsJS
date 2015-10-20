@@ -13,6 +13,8 @@
         var canvas = document.getElementById("theCanvas");
         var ctx = canvas.getContext("2d");
         var bodies = [];
+                    //  w     a     s     d
+        var presses = [false,false,false,false,]
 
         init();
         step();
@@ -30,20 +32,16 @@
                     x: 50,
                     y: 50
                 },
-                this.velocity = {
-                    x: 0,
-                    y: 0
-                },
-                this.acceleration = {
-                    x: 0,
-                    y: 0
-                },
-                this.angle = 0,
+                this.velocity = 0,
+                this.acceleration = 0,
+                this.facing = 0,
+                this.direction = 0;
+                this.topSpeed = 3,
                 this.draw = function () {
                     ctx.save();
                     ctx.strokeStyle = "black";
                     ctx.translate(this.pos.x, this.pos.y);
-                    ctx.rotate(this.angle * Math.PI / 180);
+                    ctx.rotate(this.facing * Math.PI / 180);
                     ctx.beginPath();
                     ctx.moveTo(10, 0);
                     ctx.lineTo(-10, 5);
@@ -53,34 +51,71 @@
                     ctx.stroke();
                     ctx.closePath();
                     ctx.restore();
-                },
+                }, //xcos ysin
                 this.move = function () {
-                    this.velocity.x += this.acceleration.x;
+                    if(this.velocity < 1)
+                        this.velocity += this.acceleration;
+                    this.pos.x += (this.velocity * Math.cos(this.direction * Math.PI / 180));
+                    this.pos.y += (this.velocity * Math.sin(this.direction * Math.PI / 180));
 
                 }
         }
         $(document).on("keydown", function () {
-            if (event.which == 87) {
-                //get future position via facing and add accel to both x/y
+            if (event.which == 87) {//w
+                presses[0] = true;
             }
-            if (event.which == 65) {
-                bodies[0].angle -= 5;
+            if (event.which == 65) {//a
+                presses[1] = true;
             }
-            if (event.which == 88) {
-                //get future position via facing and add accel to both x/y
+            if (event.which == 88) {//s
+                presses[2] = true;
             }
-            if (event.which == 68) {
-                bodies[0].angle += 5;
+            if (event.which == 68) {//d
+                presses[3] = true;
             }
-
         });
-
+         $(document).on("keyup", function () {
+            if (event.which == 87) {//w
+                presses[0] = false;
+            }
+            if (event.which == 65) {//a
+                presses[1] = false;
+            }
+            if (event.which == 88) {//s
+                presses[2] = false;
+            }
+            if (event.which == 68) {//d
+                presses[3] = false;
+            }
+        });       
+        
+        function checkPresses(){
+             if (presses[0] == true) {
+                bodies[0].acceleration = .05;
+                bodies[0].direction = bodies[0].facing;
+            }
+            if (presses[1] == true) {
+                bodies[0].facing -= 5;
+            }
+            if (presses[2] == true) {
+                //get future position via facing and add accel to both x/y
+                bodies[0].acceleration = 0;
+            }
+            if (presses[3] == true) {
+                bodies[0].facing += 5;
+            }          
+        }
+ 
         function step() {
             ctx.clearRect(0, 0, canvas.width, canvas.height)
+            checkPresses();
             for (var i in bodies) {
                 bodies[i].move();
                 bodies[i].draw();
             }
+            ctx.fillStyle="black";
+            ctx.fillText(bodies[0].facing,0,0);
+            
             window.requestAnimationFrame(step);
         }
     </script>
