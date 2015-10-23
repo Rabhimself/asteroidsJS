@@ -15,7 +15,7 @@
         var bodies = []; //array of all objects
         //   w      a      s      d
         var presses = [false, false, false, false, ] //booleans determine if a button is held down.
-
+        var playerShip;
         init();
         step();
 
@@ -25,7 +25,7 @@
             playerShip = new Ship();
             bodies.push(playerShip);
             for (var i = 0; i < 5; i++) {
-                theRoid = new SRoid();
+                theRoid = new SRoid(i);
                 bodies.push(theRoid);
             }
         }
@@ -48,7 +48,6 @@
                 y: 0
             };
             this.facing = 0;
-            this.direction = 0;
             this.thrust = 0;
             this.mass = 20;
             this.topSpeed = 3;
@@ -79,7 +78,8 @@
                 }
         }
 
-        function SRoid() { //creates a small asteroid
+        function SRoid(i) { //creates a small asteroid
+            this.id = i;
             this.pos = {
                 x: Math.random() * 800,
                 y: Math.random() * 600
@@ -152,24 +152,24 @@
         function checkPresses() {
             if (presses[0] == true) {
                 {
-                    bodies[0].thrust = 2;
+                    playerShip.thrust = 2;
                 }
-            }
-            else
-                bodies[0].thrust = 0;
+            } else
+                playerShip.thrust = 0;
             if (presses[1] == true) {
-                bodies[0].facing -= 5;
+                playerShip.facing -= 5;
             }
             if (presses[2] == true) {
                 //get future position via facing and add accel to both x/y
             }
             if (presses[3] == true) {
-                bodies[0].facing += 5;
+                playerShip.facing += 5;
             }
         }
 
         function colCheck() {
             for (var i in bodies) {
+                boundaryCheck(bodies[i]);
                 for (var j in bodies) {
                     if (i != j) {
                         var distX = bodies[i].pos.x - bodies[j].pos.x;
@@ -178,13 +178,41 @@
                         var radSqrd = (bodies[i].radius + bodies[j].radius) * (bodies[i].radius + bodies[j].radius);
                         var bool = Boolean(dist < radSqrd);
                         if (bool) { // handle this differently. Logic works, just need to remove the correct objects
-                            bodies.pop(bodies[j]);
-                            bodies.pop(bodies[i]);
+                            if (i < j) {
+                                bodies.splice(j, 1);
+                                bodies.splice(i, 1);
+                            } else {
+                                bodies.splice(i, 1);
+                                bodies.splice(j, 1);
+                            }
                         }; //collision 
                     }
                 }
             }
         }
+
+        function boundaryCheck(body) {
+
+            if (body.pos.x + body.radius < 0) //make sure the object leaves the LEFT SIDE before moving it
+            {
+                body.pos.x = canvas.width + body.radius;
+            }
+            if (body.pos.x - body.radius > canvas.width) //make sure the object leaves the RIGHT SIDE before moving it
+            {
+                body.pos.x = 0 + body.radius;
+            }
+            if (body.pos.y + body.radius < 0) //make sure the object leaves the TOP before moving it
+            {
+                body.pos.y = canvas.height - body.radius;
+            }
+            if (body.pos.y - body.radius > canvas.height) //make sure the object leaves the TOP before moving it
+            {
+                body.pos.y = 0 + body.radius;
+            }
+        }
+
+        
+
 
         function step() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -195,7 +223,7 @@
                 bodies[i].draw();
             }
             ctx.fillStyle = "black";
-            ctx.fillText(bodies[0].facing, 0, 0);
+            ctx.fillText(playerShip.facing, 0, 0);
             colCheck();
             window.requestAnimationFrame(step);
         }
