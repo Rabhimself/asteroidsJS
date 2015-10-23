@@ -12,68 +12,85 @@
     <script type="text/javascript">
         var canvas = document.getElementById("theCanvas");
         var ctx = canvas.getContext("2d");
-        var bodies = [];
-        //  w     a     s     d
-        var presses = [false, false, false, false, ]
+        var bodies = []; //array of all objects
+        //   w      a      s      d
+        var presses = [false, false, false, false, ] //booleans determine if a button is held down.
 
         init();
         step();
 
         function init() {
-            console.log("init called");
             canvas.height = 600;
             canvas.width = 800;
             playerShip = new Ship();
-
             bodies.push(playerShip);
-            theRoid = new SRoid();
-            bodies.push(theRoid);
+            for (var i = 0; i < 5; i++) {
+                theRoid = new SRoid();
+                bodies.push(theRoid);
+            }
         }
 
         function Ship() { //creates a ship
             this.pos = {
-                    x: 50,
-                    y: 50
-                },
-                this.velocity = 0,
-                this.acceleration = 0,
-                this.facing = 0,
-                this.direction = 0,
-                this.topSpeed = 3,
-                this.draw = function () {
+                x: 50,
+                y: 50
+            };
+            this.velocity = {
+                x: 0,
+                y: 0
+            };
+            this.acceleration = {
+                x: 0,
+                y: 0
+            };
+            this.force = {
+                x: 0,
+                y: 0
+            };
+            this.facing = 0;
+            this.direction = 0;
+            this.thrust = 0;
+            this.mass = 20;
+            this.topSpeed = 3;
+            this.radius = 5;
+            this.draw = function () {
                     ctx.save();
                     ctx.strokeStyle = "black";
                     ctx.translate(this.pos.x, this.pos.y);
                     ctx.rotate(this.facing * Math.PI / 180);
                     ctx.beginPath();
                     ctx.moveTo(10, 0);
-                    ctx.lineTo(-10, 5);
+                    ctx.lineTo(-10, 10);
                     ctx.lineTo(-5, 0);
-                    ctx.lineTo(-10, -5);
+                    ctx.lineTo(-10, -10);
                     ctx.lineTo(10, 0);
                     ctx.stroke();
                     ctx.closePath();
                     ctx.restore();
                 }, //xcos ysin
                 this.move = function () {
-                    if (this.velocity < this.topSpeed)
-                        this.velocity += this.acceleration;
-                    this.pos.x += (this.velocity * Math.cos(this.direction * Math.PI / 180));
-                    this.pos.y += (this.velocity * Math.sin(this.direction * Math.PI / 180));
+
+                    this.force.x = (this.thrust * Math.cos(this.facing * Math.PI / 180));
+                    this.force.y = (this.thrust * Math.sin(this.facing * Math.PI / 180));
+                    this.velocity.x += this.force.x / this.mass;
+                    this.velocity.y += this.force.y / this.mass;
+                    this.pos.x += this.velocity.x;
+                    this.pos.y += this.velocity.y;
                 }
         }
 
         function SRoid() { //creates a small asteroid
             this.pos = {
-                    x: Math.random() * 800,
-                    y: Math.random() * 600
-                },
-                this.velocity = Math.random(),
-                this.acceleration = 0,
-                this.facing = Math.random()*360,
-                this.direction = Math.random()*360,
-                this.topSpeed = 5,
-                this.draw = function () {
+                x: Math.random() * 800,
+                y: Math.random() * 600
+            };
+            this.velocity = Math.random();
+            this.acceleration = 0;
+            this.facing = Math.random() * 360;
+            this.direction = Math.random() * 360;
+            this.topSpeed = 5;
+            this.radius = 10;
+            this.draw = function () {
                     ctx.save();
                     ctx.strokeStyle = "black";
                     ctx.translate(this.pos.x, this.pos.y);
@@ -82,6 +99,8 @@
                     ctx.moveTo(10, 0);
                     ctx.lineTo(5, 8);
                     ctx.lineTo(0, 8);
+                    ctx.lineTo(-8, 8);
+                    ctx.lineTo(-9, 0);
                     ctx.lineTo(-4, -6);
                     ctx.lineTo(-8, -9);
                     ctx.lineTo(-5, -11);
@@ -91,13 +110,13 @@
                     ctx.stroke();
                     ctx.closePath();
                     ctx.restore();
-                }, //xcos ysin
-                this.move = function () {
-                    if (this.velocity < this.topSpeed)
-                        this.velocity += this.acceleration;
-                    this.pos.x += (this.velocity * Math.cos(this.direction * Math.PI / 180));
-                    this.pos.y += (this.velocity * Math.sin(this.direction * Math.PI / 180));
-                }
+                } //xcos ysin
+            this.move = function () {
+                if (this.velocity < this.topSpeed)
+                    this.velocity += this.acceleration;
+                this.pos.x += (this.velocity * Math.cos(this.direction * Math.PI / 180));
+                this.pos.y += (this.velocity * Math.sin(this.direction * Math.PI / 180));
+            }
         }
 
         $(document).on("keydown", function () {
@@ -107,7 +126,7 @@
             if (event.which == 65) { //a
                 presses[1] = true;
             }
-            if (event.which == 88) { //s
+            if (event.which == 83) { //s
                 presses[2] = true;
             }
             if (event.which == 68) { //d
@@ -122,7 +141,7 @@
             if (event.which == 65) { //a
                 presses[1] = false;
             }
-            if (event.which == 88) { //s
+            if (event.which == 83) { //s
                 presses[2] = false;
             }
             if (event.which == 68) { //d
@@ -133,25 +152,43 @@
         function checkPresses() {
             if (presses[0] == true) {
                 {
-                    bodies[0].acceleration = .05;
-                    bodies[0].direction = bodies[0].facing;
+                    bodies[0].thrust = 2;
                 }
-
             }
+            else
+                bodies[0].thrust = 0;
             if (presses[1] == true) {
                 bodies[0].facing -= 5;
             }
             if (presses[2] == true) {
                 //get future position via facing and add accel to both x/y
-                bodies[0].acceleration = 0;
             }
             if (presses[3] == true) {
                 bodies[0].facing += 5;
             }
         }
 
+        function colCheck() {
+            for (var i in bodies) {
+                for (var j in bodies) {
+                    if (i != j) {
+                        var distX = bodies[i].pos.x - bodies[j].pos.x;
+                        var distY = bodies[i].pos.y - bodies[j].pos.y;
+                        var dist = (distX * distX) + (distY * distY);
+                        var radSqrd = (bodies[i].radius + bodies[j].radius) * (bodies[i].radius + bodies[j].radius);
+                        var bool = Boolean(dist < radSqrd);
+                        if (bool) { // handle this differently. Logic works, just need to remove the correct objects
+                            bodies.pop(bodies[j]);
+                            bodies.pop(bodies[i]);
+                        }; //collision 
+                    }
+                }
+            }
+        }
+
         function step() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
             checkPresses();
             for (var i in bodies) {
                 bodies[i].move();
@@ -159,7 +196,7 @@
             }
             ctx.fillStyle = "black";
             ctx.fillText(bodies[0].facing, 0, 0);
-
+            colCheck();
             window.requestAnimationFrame(step);
         }
     </script>
