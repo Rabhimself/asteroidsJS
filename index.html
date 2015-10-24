@@ -25,9 +25,10 @@
             playerShip = new Ship();
             bodies.push(playerShip);
             for (var i = 0; i < 5; i++) {
-                theRoid = new SRoid(i);
+                theRoid = new SRoid();
                 bodies.push(theRoid);
             }
+            
         }
 
         function Ship() { //creates a ship
@@ -47,11 +48,62 @@
                 x: 0,
                 y: 0
             };
+            this.shotCount = 0;
             this.facing = 0;
             this.thrust = 0;
             this.mass = 20;
             this.topSpeed = 3;
             this.radius = 5;
+            this.draw = function () {
+                ctx.save();
+                ctx.strokeStyle = "black";
+                ctx.translate(this.pos.x, this.pos.y);
+                ctx.rotate(this.facing * Math.PI / 180);
+                ctx.beginPath();
+                ctx.moveTo(10, 0);
+                ctx.lineTo(-10, 10);
+                ctx.lineTo(-5, 0);
+                ctx.lineTo(-10, -10);
+                ctx.lineTo(10, 0);
+                ctx.stroke();
+                ctx.closePath();
+                ctx.restore();
+            }; //xcos ysin
+            this.move = function () {
+
+                this.force.x = (this.thrust * Math.cos(this.facing * Math.PI / 180));
+                this.force.y = (this.thrust * Math.sin(this.facing * Math.PI / 180));
+                this.velocity.x += this.force.x / this.mass;
+                this.velocity.y += this.force.y / this.mass;
+                this.pos.x += this.velocity.x;
+                this.pos.y += this.velocity.y;
+            }
+            this.shoot = function () {
+                var shotID = this.shotCount++;
+                var projectile = new Projectile(this.pos.x + this.velocity.x *10, this.pos.y + + this.velocity.x *10, this.facing, shotID);//get ship velocity vector and + radius to determine spawn point
+                bodies.push(projectile);
+                setTimeout(function(){
+                    for(var i in bodies)
+                        if(bodies[i].id == shotID)
+                            bodies.splice(i,1);
+                },2000);
+
+
+            }
+        }
+
+        function Projectile(xloc, yloc, heading, shotCount) {
+            console.log(xloc + " " + yloc);
+            this.pos = {
+                x: xloc,
+                y: yloc
+            };
+                    this.id =shotCount;
+            this.velocity = 4;
+            this.acceleration = 0;
+            this.facing = heading;
+            this.topSpeed = 5;
+            this.radius = 10;
             this.draw = function () {
                     ctx.save();
                     ctx.strokeStyle = "black";
@@ -59,27 +111,25 @@
                     ctx.rotate(this.facing * Math.PI / 180);
                     ctx.beginPath();
                     ctx.moveTo(10, 0);
-                    ctx.lineTo(-10, 10);
-                    ctx.lineTo(-5, 0);
-                    ctx.lineTo(-10, -10);
+                    ctx.lineTo(7, -2);
+                    ctx.lineTo(0, -2);
+                    ctx.lineTo(0, 2);
+                    ctx.lineTo(7, 2);
                     ctx.lineTo(10, 0);
                     ctx.stroke();
                     ctx.closePath();
                     ctx.restore();
-                }, //xcos ysin
-                this.move = function () {
-
-                    this.force.x = (this.thrust * Math.cos(this.facing * Math.PI / 180));
-                    this.force.y = (this.thrust * Math.sin(this.facing * Math.PI / 180));
-                    this.velocity.x += this.force.x / this.mass;
-                    this.velocity.y += this.force.y / this.mass;
-                    this.pos.x += this.velocity.x;
-                    this.pos.y += this.velocity.y;
-                }
+                } //xcos ysin
+            this.move = function () {
+                if (this.velocity < this.topSpeed)
+                    this.velocity += this.acceleration;
+                this.pos.x += (this.velocity * Math.cos(this.facing * Math.PI / 180));
+                this.pos.y += (this.velocity * Math.sin(this.facing * Math.PI / 180));
+            }
         }
 
-        function SRoid(i) { //creates a small asteroid
-            this.id = i;
+        function SRoid() { //creates a small asteroid
+
             this.pos = {
                 x: Math.random() * 800,
                 y: Math.random() * 600
@@ -132,6 +182,10 @@
             if (event.which == 68) { //d
                 presses[3] = true;
             }
+            if (event.which == 32) { //space
+                playerShip.shoot();
+            }
+
         });
 
         $(document).on("keyup", function () {
@@ -147,6 +201,7 @@
             if (event.which == 68) { //d
                 presses[3] = false;
             }
+
         });
 
         function checkPresses() {
@@ -160,7 +215,7 @@
                 playerShip.facing -= 5;
             }
             if (presses[2] == true) {
-                //get future position via facing and add accel to both x/y
+                playerShip.thrust = -2;
             }
             if (presses[3] == true) {
                 playerShip.facing += 5;
@@ -171,13 +226,20 @@
             for (var i in bodies) {
                 boundaryCheck(bodies[i]);
                 for (var j in bodies) {
-                    if (i != j) {
+                    if ((i != j) && ((bodies[i] instanceof SRoid) || (bodies[j] instanceof SRoid))) {
                         var distX = bodies[i].pos.x - bodies[j].pos.x;
                         var distY = bodies[i].pos.y - bodies[j].pos.y;
                         var dist = (distX * distX) + (distY * distY);
                         var radSqrd = (bodies[i].radius + bodies[j].radius) * (bodies[i].radius + bodies[j].radius);
                         var bool = Boolean(dist < radSqrd);
-                        if (bool) { // handle this differently. Logic works, just need to remove the correct objects
+                        console.log(bool);
+                        if (bool) { 
+                            if(i == 0)
+                                {
+                                     window.alert("Game Over!");
+                                    location.reload();
+                                }
+                               
                             if (i < j) {
                                 bodies.splice(j, 1);
                                 bodies.splice(i, 1);
@@ -211,7 +273,7 @@
             }
         }
 
-        
+
 
 
         function step() {
