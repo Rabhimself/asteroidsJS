@@ -12,9 +12,10 @@
     <script type="text/javascript">
         var canvas = document.getElementById("theCanvas");
         var ctx = canvas.getContext("2d");
+        var roidCount = 0;
         var bodies = []; //array of all objects
         //   w      a      s      d
-        var presses = [false, false, false, false, ] //booleans determine if a button is held down.
+        var presses = [false, false, false, false, false] //booleans determine if a button is held down.
         var playerShip;
         init();
         step();
@@ -25,10 +26,11 @@
             playerShip = new Ship();
             bodies.push(playerShip);
             for (var i = 0; i < 5; i++) {
-                theRoid = new SRoid();
-                bodies.push(theRoid);
+                newRoid = new Roid();
+                bodies.push(newRoid);
+                roidCount++;
             }
-            
+
         }
 
         function Ship() { //creates a ship
@@ -49,6 +51,7 @@
                 y: 0
             };
             this.shotCount = 0;
+            this.reloading = false;
             this.facing = 0;
             this.thrust = 0;
             this.mass = 20;
@@ -70,23 +73,30 @@
                 ctx.restore();
             }; //xcos ysin
             this.move = function () {
-
                 this.force.x = (this.thrust * Math.cos(this.facing * Math.PI / 180));
                 this.force.y = (this.thrust * Math.sin(this.facing * Math.PI / 180));
                 this.velocity.x += this.force.x / this.mass;
                 this.velocity.y += this.force.y / this.mass;
+                if(Math.abs(this.velocity.x > 10))
+                    this.velocity.x = 10
                 this.pos.x += this.velocity.x;
+                if(Math.abs(this.velocity.y > 10))
+                    this.velocity.y = 10
                 this.pos.y += this.velocity.y;
             }
             this.shoot = function () {
+                this.reloading = true;
                 var shotID = this.shotCount++;
-                var projectile = new Projectile(this.pos.x + this.velocity.x *10, this.pos.y + + this.velocity.x *10, this.facing, shotID);//get ship velocity vector and + radius to determine spawn point
+                var projectile = new Projectile(this.pos.x, this.pos.y, this.facing, shotID); //get ship velocity vector and + radius to determine spawn point
                 bodies.push(projectile);
-                setTimeout(function(){
-                    for(var i in bodies)
-                        if(bodies[i].id == shotID)
-                            bodies.splice(i,1);
-                },2000);
+                setTimeout(function () {
+                    playerShip.reloading = false
+                }, 250);
+                setTimeout(function () { //anon function to delete the projectile after 2 seconds
+                    for (var i in bodies)
+                        if (bodies[i].id == shotID)
+                            bodies.splice(i, 1);
+                }, 2000);
 
 
             }
@@ -98,8 +108,8 @@
                 x: xloc,
                 y: yloc
             };
-                    this.id =shotCount;
-            this.velocity = 4;
+            this.id = shotCount;
+            this.velocity = 6;
             this.acceleration = 0;
             this.facing = heading;
             this.topSpeed = 5;
@@ -128,7 +138,7 @@
             }
         }
 
-        function SRoid() { //creates a small asteroid
+        function Roid() { //creates a small asteroid
 
             this.pos = {
                 x: Math.random() * 800,
@@ -183,7 +193,7 @@
                 presses[3] = true;
             }
             if (event.which == 32) { //space
-                playerShip.shoot();
+                presses[4] = true;
             }
 
         });
@@ -201,14 +211,16 @@
             if (event.which == 68) { //d
                 presses[3] = false;
             }
+            if(event.which == 32)
+                presses[4] = false;
 
         });
 
         function checkPresses() {
             if (presses[0] == true) {
-                {
-                    playerShip.thrust = 2;
-                }
+                
+                playerShip.thrust = 2;
+
             } else
                 playerShip.thrust = 0;
             if (presses[1] == true) {
@@ -220,26 +232,26 @@
             if (presses[3] == true) {
                 playerShip.facing += 5;
             }
+            if(presses[4] == true && playerShip.reloading == false)
+                    playerShip.shoot();
         }
 
         function colCheck() {
             for (var i in bodies) {
                 boundaryCheck(bodies[i]);
                 for (var j in bodies) {
-                    if ((i != j) && ((bodies[i] instanceof SRoid) || (bodies[j] instanceof SRoid))) {
+                    if ((i != j) && ((bodies[i] instanceof Roid) || (bodies[j] instanceof Roid))) {
                         var distX = bodies[i].pos.x - bodies[j].pos.x;
                         var distY = bodies[i].pos.y - bodies[j].pos.y;
                         var dist = (distX * distX) + (distY * distY);
                         var radSqrd = (bodies[i].radius + bodies[j].radius) * (bodies[i].radius + bodies[j].radius);
                         var bool = Boolean(dist < radSqrd);
-                        console.log(bool);
-                        if (bool) { 
-                            if(i == 0)
-                                {
-                                     window.alert("Game Over!");
-                                    location.reload();
-                                }
-                               
+                        if (bool) {
+                            if (i == 0) {
+                                window.alert("Game Over!");
+                                location.reload();
+                            }
+
                             if (i < j) {
                                 bodies.splice(j, 1);
                                 bodies.splice(i, 1);
@@ -272,9 +284,6 @@
                 body.pos.y = 0 + body.radius;
             }
         }
-
-
-
 
         function step() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
