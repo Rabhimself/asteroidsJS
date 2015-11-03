@@ -325,7 +325,7 @@
                 boundaryCheck(playerBodies[i]);
                 for (j = 0; j < asteroids.length; j++) {
                     boundaryCheck(asteroids[j]);
-                    
+
                     try { //on the offchance a projectile despawned at the perfect time, this needs exception handling.
                         var distX = playerBodies[i].pos.x - asteroids[j].pos.x;
                         var distY = playerBodies[i].pos.y - asteroids[j].pos.y;
@@ -344,8 +344,13 @@
                                 roidCount--;
                                 playerShip.score += 100;
                                 playerBodies.splice(i, 1);
+                                if (asteroids[j].radius == 28)
+                                    splodeLargeRoid(asteroids[j].pos.x, asteroids[j].pos.y);
+                                else if(asteroids[j].radius == 18)
+                                    splodeMediumRoid(asteroids[j].pos.x, asteroids[j].pos.y);
                                 asteroids.splice(j, 1);
-                                if(i >= playerBodies.length)
+
+                                if (i >= playerBodies.length)
                                     return;
                             }
                         } //collision
@@ -378,17 +383,28 @@
         }
 
         function splodeLargeRoid(x, y) {
-            for (var i; i < 2; i++) {
+            console.log(x +" " +y);
+            for (var i = 0; i < 2; i++) {
                 newRoid = new Roid();
                 newRoid.pos.x = x;
                 newRoid.pos.y = y;
+                newRoid.radius = 18;
+                newRoid.draw = drawMediumRoid;
                 asteroids.push(newRoid);
                 roidCount++;
             }
         }
 
-        function slpodeMediumRoid() {
-
+        function splodeMediumRoid(x,y) {
+            for (var i = 0; i < 2; i++) {
+                newRoid = new Roid();
+                newRoid.pos.x = x;
+                newRoid.pos.y = y;
+                newRoid.radius = 8;
+                newRoid.draw = drawSmallRoid;
+                asteroids.push(newRoid);
+                roidCount++;
+            }
         }
 
         function step() {
