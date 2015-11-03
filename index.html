@@ -14,7 +14,8 @@
         var ctx = canvas.getContext("2d");
         var roidCount = 0;
         var rand;
-        var bodies = []; //array of all objects
+        var playerBodies = []; //array of all player objects
+        var asteroids = [];
         //   w      a      s      d
         var presses = [false, false, false, false, false] //booleans determine if a button is held down.
         var playerShip;
@@ -25,7 +26,7 @@
             canvas.height = 600;
             canvas.width = 800;
             playerShip = new Ship();
-            bodies.push(playerShip);
+            playerBodies.push(playerShip);
             for (var i = 0; i < 20; i++) {
                 rand = Math.floor(Math.random() * 3);
                 newRoid = new Roid();
@@ -39,7 +40,7 @@
                     newRoid.radius = 28;
                     newRoid.draw = drawLargeRoid;
                 }
-                bodies.push(newRoid);
+                asteroids.push(newRoid);
                 roidCount++;
             }
 
@@ -102,7 +103,7 @@
                 this.shotCharges--;
                 this.reloading = true;
                 p = new Projectile(this.pos.x, this.pos.y, this.facing, this.shotCount++);
-                bodies.push(p);
+                playerBodies.push(p);
                 setTimeout(function () {
                     playerShip.reloading = false
                 }, 250);
@@ -153,10 +154,9 @@
             this.despawnProjectile = function () {
                 //console.log(this.id);
 
-                for (var i in bodies)
-                    if (bodies[i].id === this.id) {
-                        //console.log(bodies[i].id + " == " + this.id);
-                        bodies.splice(i, 1);
+                for (var i in playerBodies)
+                    if (playerBodies[i].id === this.id) {
+                        playerBodies.splice(i, 1);
                     }
 
             }
@@ -320,47 +320,40 @@
         }
 
         function colCheck() {
-            var i = 0;
-            var j = 0;
-            for (i = 0; i < bodies.length; i++) {
-                boundaryCheck(bodies[i]);
-                for (j = 0; j < bodies.length; j++) {
-                    if ((i != j) && ((bodies[i] instanceof Roid) || (bodies[j] instanceof Roid)) && (!(bodies[i] instanceof Roid) || !(bodies[j] instanceof Roid))) {
-
-                        try { //on the offchance a projectile despawned at the perfect time, this needs exception handling.
-                            var distX = bodies[i].pos.x - bodies[j].pos.x;
-                            var distY = bodies[i].pos.y - bodies[j].pos.y;
-                            var dist = (distX * distX) + (distY * distY);
-                            var radSqrd = (bodies[i].radius + bodies[j].radius) * (bodies[i].radius + bodies[j].radius);
-                            var bool = Boolean(dist < radSqrd);
-                            if (bool) {
-                                //console.log("col: ");
-                                //console.log(bodies[i]);
-                                //console.log(bodies[j]);
-                                if (i == 0 || j == 0) {
-                                    window.alert("Game Over!");
-                                    location.reload();
-                                    return; 
-                                } 
-                                else {
-                                    roidCount--;
-                                    playerShip.score += 100;
-                                    //console.log(i);
-                                    //console.log(j);
-                                    if (i < j) {
-                                        bodies.splice(j, 1);
-                                        bodies.splice(i, 1);
-                                    } else {
-                                        bodies.splice(i, 1);
-                                        bodies.splice(j, 1);
-                                    }
-                                }
-                            } //collision
-                        } catch (err) {
-                            console.log(err.message);
-                        }
+            var i = j = 0;
+            for (i = 0; i < playerBodies.length; i++) {
+                boundaryCheck(playerBodies[i]);
+                for (j = 0; j < asteroids.length; j++) {
+                    boundaryCheck(asteroids[j]);
+                    
+                    try { //on the offchance a projectile despawned at the perfect time, this needs exception handling.
+                        var distX = playerBodies[i].pos.x - asteroids[j].pos.x;
+                        var distY = playerBodies[i].pos.y - asteroids[j].pos.y;
+                        var dist = (distX * distX) + (distY * distY);
+                        var radSqrd = (playerBodies[i].radius + asteroids[j].radius) * (playerBodies[i].radius + asteroids[j].radius);
+                        var bool = Boolean(dist < radSqrd);
+                        if (bool) {
+                            //console.log("col: ");
+                            //console.log(bodies[i]);
+                            //console.log(bodies[j]);
+                            if (i == 0) {
+                                window.alert("Game Over!");
+                                location.reload();
+                                return;
+                            } else {
+                                roidCount--;
+                                playerShip.score += 100;
+                                playerBodies.splice(i, 1);
+                                asteroids.splice(j, 1);
+                                if(i >= playerBodies.length)
+                                    return;
+                            }
+                        } //collision
+                    } catch (err) {
+                        console.log(err.message);
                     }
                 }
+
             }
         }
 
@@ -389,7 +382,7 @@
                 newRoid = new Roid();
                 newRoid.pos.x = x;
                 newRoid.pos.y = y;
-                bodies.push(newRoid);
+                asteroids.push(newRoid);
                 roidCount++;
             }
         }
@@ -404,9 +397,13 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             checkPresses();
-            for (var i in bodies) {
-                bodies[i].move();
-                bodies[i].draw();
+            for (var i in playerBodies) {
+                playerBodies[i].move();
+                playerBodies[i].draw();
+            }
+            for (var i in asteroids) {
+                asteroids[i].move();
+                asteroids[i].draw();
             }
             ctx.fillStyle = "white";
             //ctx.fillText(playerShip.facing, 0, 0);
