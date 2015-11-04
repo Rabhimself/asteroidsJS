@@ -15,38 +15,39 @@
         canvas.height = 600;
         canvas.width = 800;
         var roidCount = 0;
+        var difficulty;
         var rand;
+        var indx = 3;
         var winState;
         var playerBodies = []; //array of all player objects
         var asteroids = [];
         //   w      a      s      d
         var presses = [false, false, false, false, false] //booleans determine if a button is held down.
         var playerShip;
+
         startScreen();
-        //init();
-        //step();
 
         function init() {
 
             playerShip = new Ship();
             playerBodies.push(playerShip);
-            for (var i = 0; i < 20; i++) {
-                rand = Math.floor(Math.random() * 3);
+            for (var i = 0; i < difficulty; i++) {
                 newRoid = new Roid();
-                if (rand == 0) {
-                    newRoid.radius = 8;
-                    newRoid.draw = drawSmallRoid;
-                } else if (rand == 1) {
+                if (i % 3 == 1) {
                     newRoid.radius = 18;
                     newRoid.draw = drawMediumRoid;
-                } else {
+                } else if (i % 3 == 2) {
                     newRoid.radius = 28;
                     newRoid.draw = drawLargeRoid;
+                } else {
+                    newRoid.radius = 8;
+                    newRoid.draw = drawSmallRoid;
+
                 }
                 asteroids.push(newRoid);
                 roidCount++;
             }
-
+            step();
         }
 
         function Ship() { //creates a ship
@@ -328,9 +329,7 @@
 
         function checkPresses() {
             if (presses[0] == true) {
-
                 playerShip.thrust = 2;
-
             } else
                 playerShip.thrust = 0;
             if (presses[1] == true) {
@@ -364,8 +363,7 @@
                             //console.log(bodies[i]);
                             //console.log(bodies[j]);
                             if (i == 0) {
-                                window.alert("Game Over!");
-                                location.reload();
+                                winState = "L";
                                 return;
                             } else {
                                 roidCount--;
@@ -434,60 +432,189 @@
                 roidCount++;
             }
         }
-        //displays a win screen, where a name is entered for high scores.
-        function winScreen() {
-            var name = window.prompt("Enter your initials: ", "");
-            name = name.substr(0, 3);
 
+        function printBoxes(boxes) {
             ctx.save();
             ctx.fillStyle = "black";
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "white";
-            ctx.strokeStyle = "white";
-            ctx.fillText("You Won!", 400, 50);
-            var highScores;
-            try {
-                highScores = JSON.parse(localStorage["highScores"])
-            } catch (err) {
-                console.log("failed to parse high scores");
-                highScores = [];
-            }
+            ctx.textAlign = "center";
 
-            highScores.push(playerShip.score);
-            highScores.sort(function (a, b) {
+            //draw the first box
+            ctx.strokeStyle = boxes[0].color;
+            ctx.strokeRect((canvas.width / 2) - 50, canvas.height / 2, 30, 50);
+            ctx.fillText(boxes[0].char, canvas.width / 2 - 35, canvas.height / 2 + 25);
 
-                return b.score - a.score
+            //draw the second box
+            ctx.strokeStyle = boxes[1].color;
+            ctx.strokeRect((canvas.width / 2) - 15, canvas.height / 2, 30, 50);
+            ctx.fillText(boxes[1].char, canvas.width / 2, canvas.height / 2 + 25);
+
+            //draw the third box
+            ctx.strokeStyle = boxes[2].color;
+            ctx.strokeRect((canvas.width / 2) + 20, canvas.height / 2, 30, 50);
+            ctx.fillText(boxes[2].char, canvas.width / 2 + 35, canvas.height / 2 + 25);
+            window.requestAnimationFrame(function () {
+                printBoxes(boxes);
             });
-            console.log(highScores.length);
-            highScores = highScores.splice(0, 9);
-            var x = 300,
-                y = 100;
-            for (var i = 0; i < highScores.length; i++) {
-                ctx.fillText(highScores[i], x, y)
-                y += 10;
-            } //stores the new high scores in local storage
-            localStorage["highScores"] = JSON.stringify(highScores);
 
         }
 
-        function startScreen() {
+        //displays a win screen, where a name is entered for high scores.
+        function winScreen() {
+            var boxes = [{
+                    color: "white",
+                    char: "A"
+            },
+                {
+                    color: "black",
+                    char: "A"
+            },
+                {
+                    color: "black",
+                    char: "A"
+            }]
+
+
+            ctx.fillText("You Won!", 400, 50);
+            $(document).bind("keydown", function (e) {
+                switch (e.keyCode) {
+                case 39:
+                    indx++;
+                    break;
+                case 37:
+                    indx--;
+                    break;
+                default:
+                    if (e.keyCode >= 65 && e.keyCode <= 65 + 26) {
+                        boxes[indx%3].char = String.fromCharCode(e.keyCode);
+                    }
+                };
+                if (indx % 3 == 1) {
+                    boxes[1].color = "white";
+                    boxes[0].color = "black";
+                    boxes[2].color = "black";
+                } else if (indx % 3 == 2) {
+                    boxes[0].color = "black";
+                    boxes[2].color = "white";
+                    boxes[1].color = "black";
+                } else if (indx % 3 == 0) {
+                    boxes[2].color = "black";
+                    boxes[1].color = "black";
+                    boxes[0].color = "white";
+                }
+            });
+
+            window.requestAnimationFrame(function () {
+                printBoxes(boxes);
+            });
+            $(document).unbind("keyup");
+
+            //var highScores;
+            //try {
+            //    highScores = JSON.parse(localStorage["highScores"])
+            //} catch (err) {
+            //    console.log("failed to parse high scores");
+            //    highScores = [];
+            //}
+
+            //highScores.push(playerShip.score);
+            //highScores.sort(function (a, b) {
+            //
+            //    return b.score - a.score
+            //});
+            //console.log(highScores.length);
+            //highScores = highScores.splice(0, 9);
+            //var x = 300,
+            //    y = 100;
+            //for (var i = 0; i < highScores.length; i++) {
+            //    ctx.fillText(highScores[i], x, y)
+            //    y += 10;
+            //} //stores the new high scores in local storage
+            //
+            //localStorage["highScores"] = JSON.stringify(highScores);
+
+
+        }
+
+
+        function loseScreen() {
             ctx.save();
             ctx.fillStyle = "black";
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = "white";
             ctx.fillStyle = "white";
-            ctx.strokeRect(canvas.width / 2 - 50, (canvas.height * 1 / 3), 100, 50);
-            ctx.fillText("Easy", canvas.width / 2 - 12, canvas.height * 1 / 3 + 27);
-            ctx.strokeRect(canvas.width / 2 - 50, (canvas.height * 1 / 3) + 60, 100, 50);
-            ctx.fillText("Medium", canvas.width / 2 - 16, canvas.height * 1 / 3 + 87);
-            ctx.strokeRect(canvas.width / 2 - 50, (canvas.height * 1 / 3) + 120, 100, 50);
-            ctx.fillText("Hard", canvas.width / 2 - 10, canvas.height * 1 / 3 + 147);
+            ctx.textAlign = "center";
+            ctx.font = "40px Georgia";
+            ctx.fillText("You crashed!", canvas.width / 2, 50);
+            ctx.font = "20px Georgia";
+            ctx.fillText("You should watch where you're flying.", canvas.width / 2, 150);
+            ctx.strokeRect(easyButton.left, easyButton.top, 100, 50);
+            ctx.fillText("Restart", canvas.width / 2, canvas.height * 1 / 3 + 27);
 
             $("#theCanvas").click(function (e) {
-                console.log(e);
+                if ((e.offsetX > easyButton.left && e.offsetX < easyButton.right) && (e.offsetY > easyButton.top && e.offsetY < easyButton.bottom))
+                    location.reload();
             });
+        }
+
+        function startScreen() {
+            easyButton = {
+                left: (canvas.width / 2 - 50),
+                right: ((canvas.width / 2 - 50) + 100),
+                top: (canvas.height * 1 / 3),
+                bottom: (canvas.height * 1 / 3) + 50
+            }
+            mediumButton = {
+                left: (canvas.width / 2 - 50),
+                right: ((canvas.width / 2 - 50) + 100),
+                top: (canvas.height * 1 / 3) + 60,
+                bottom: (canvas.height * 1 / 3) + 110
+            }
+            hardButton = {
+                left: (canvas.width / 2 - 50),
+                right: ((canvas.width / 2 - 50) + 100),
+                top: (canvas.height * 1 / 3) + 120,
+                bottom: (canvas.height * 1 / 3) + 170
+            }
+            ctx.save();
+            ctx.fillStyle = "black";
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "white";
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+            ctx.font = "40px Georgia";
+            ctx.fillText("Asteroids", canvas.width / 2, 50);
+            ctx.font = "20px Georgia";
+            ctx.fillText("Select a difficulty", canvas.width / 2, 150);
+            ctx.strokeRect(easyButton.left, easyButton.top, 100, 50);
+            ctx.fillText("Easy", canvas.width / 2, canvas.height * 1 / 3 + 27);
+
+            ctx.strokeRect(mediumButton.left, mediumButton.top, 100, 50);
+            ctx.fillText("Medium", canvas.width / 2, canvas.height * 1 / 3 + 87);
+
+            ctx.strokeRect(hardButton.left, hardButton.top, 100, 50);
+            ctx.fillText("Hard", canvas.width / 2, canvas.height * 1 / 3 + 147);
+            ctx.restore();
+            $("#theCanvas").click(function (e) {
+                if (!difficulty) {
+                    if (e.offsetX > easyButton.left && e.offsetX < easyButton.right) {
+                        if (e.offsetY > easyButton.top && e.offsetY < easyButton.bottom)
+                            difficulty = 1;
+                        if (e.offsetY > mediumButton.top && e.offsetY < mediumButton.bottom)
+                            difficulty = 18;
+                        if (e.offsetY > hardButton.top && e.offsetY < hardButton.bottom)
+                            difficulty = 27;
+
+                    }
+                    if (difficulty)
+                        init();
+                }
+            });
+
         }
 
         function step() {
@@ -515,6 +642,8 @@
                 window.requestAnimationFrame(step);
             if (winState == "w")
                 winScreen();
+            if (winState == "L")
+                loseScreen();
 
 
         }
