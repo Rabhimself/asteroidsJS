@@ -12,6 +12,8 @@
     <script type="text/javascript">
         var canvas = document.getElementById("theCanvas");
         var ctx = canvas.getContext("2d");
+        canvas.height = 600;
+        canvas.width = 800;
         var roidCount = 0;
         var rand;
         var winState;
@@ -20,12 +22,12 @@
         //   w      a      s      d
         var presses = [false, false, false, false, false] //booleans determine if a button is held down.
         var playerShip;
-        init();
-        step();
+        startScreen();
+        //init();
+        //step();
 
         function init() {
-            canvas.height = 600;
-            canvas.width = 800;
+
             playerShip = new Ship();
             playerBodies.push(playerShip);
             for (var i = 0; i < 20; i++) {
@@ -467,6 +469,25 @@
             } //stores the new high scores in local storage
             localStorage["highScores"] = JSON.stringify(highScores);
 
+        }
+
+        function startScreen() {
+            ctx.save();
+            ctx.fillStyle = "black";
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "white";
+            ctx.fillStyle = "white";
+            ctx.strokeRect(canvas.width / 2 - 50, (canvas.height * 1 / 3), 100, 50);
+            ctx.fillText("Easy", canvas.width / 2 - 12, canvas.height * 1 / 3 + 27);
+            ctx.strokeRect(canvas.width / 2 - 50, (canvas.height * 1 / 3) + 60, 100, 50);
+            ctx.fillText("Medium", canvas.width / 2 - 16, canvas.height * 1 / 3 + 87);
+            ctx.strokeRect(canvas.width / 2 - 50, (canvas.height * 1 / 3) + 120, 100, 50);
+            ctx.fillText("Hard", canvas.width / 2 - 10, canvas.height * 1 / 3 + 147);
+
+            $("#theCanvas").click(function (e) {
+                console.log(e);
+            });
         }
 
         function step() {
