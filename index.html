@@ -14,6 +14,7 @@
         var ctx = canvas.getContext("2d");
         var roidCount = 0;
         var rand;
+        var winState;
         var playerBodies = []; //array of all player objects
         var asteroids = [];
         //   w      a      s      d
@@ -70,7 +71,6 @@
             this.thrust = 0;
             this.mass = 20;
             this.score = 0;
-            this.topSpeed = 3;
             this.radius = 5;
             this.draw = function () {
                 ctx.save();
@@ -165,11 +165,8 @@
 
         function Roid() { //creates an asteroid
 
-            this.pos = {
-                x: Math.random() * 800,
-                y: Math.random() * 600
-            };
-            this.velocity = Math.random() * 2;
+            this.pos = getSpawnLoc();
+            this.velocity = .5 + Math.random() * 1.5;
             this.facing = Math.random() * 360;
             this.direction = Math.random() * 360;
             this.radius = 10;
@@ -180,6 +177,33 @@
                 this.pos.x += (this.velocity * Math.cos(this.direction * Math.PI / 180));
                 this.pos.y += (this.velocity * Math.sin(this.direction * Math.PI / 180));
             }
+
+        }
+
+        function getSpawnLoc() {
+            rand = Math.floor(Math.random() * 5);
+            loc = {
+                x: 0,
+                y: 0
+            };
+            switch (rand) {
+            case 1: //left Side
+                loc.x = Math.random() * canvas.width * 1 / 4;
+                loc.y = Math.random() * canvas.height;
+                break;
+            case 2: //top
+                loc.x = (canvas.width * 1 / 4) + (Math.random() * canvas.width * 3 / 4);
+                loc.y = Math.random() * canvas.height * 1 / 4;
+                break;
+            case 3: //right
+                loc.x = (canvas.width * 3 / 4) + (Math.random() * canvas.width)
+                loc.y = Math.random() * canvas.height;
+                break;
+            case 4: //bottom
+                loc.x = (canvas.width * 1 / 4) + (Math.random() * canvas.width * 3 / 4);
+                loc.y = (canvas.height * 3 / 4) + (Math.random() * canvas.height);
+            }
+            return loc;
         }
 
         function drawSmallRoid() {
@@ -263,6 +287,7 @@
             ctx.closePath();
             ctx.restore();
         };
+
         $(document).on("keydown", function () {
             if (event.which == 87) { //w
                 presses[0] = true;
@@ -346,7 +371,7 @@
                                 playerBodies.splice(i, 1);
                                 if (asteroids[j].radius == 28)
                                     splodeLargeRoid(asteroids[j].pos.x, asteroids[j].pos.y);
-                                else if(asteroids[j].radius == 18)
+                                else if (asteroids[j].radius == 18)
                                     splodeMediumRoid(asteroids[j].pos.x, asteroids[j].pos.y);
                                 asteroids.splice(j, 1);
 
@@ -382,8 +407,9 @@
             }
         }
 
+        //spawns 2 medium asteroids, used on a large asteroid's destruction
         function splodeLargeRoid(x, y) {
-            console.log(x +" " +y);
+            console.log(x + " " + y);
             for (var i = 0; i < 2; i++) {
                 newRoid = new Roid();
                 newRoid.pos.x = x;
@@ -394,8 +420,8 @@
                 roidCount++;
             }
         }
-
-        function splodeMediumRoid(x,y) {
+        //spawns 2 small asteroids
+        function splodeMediumRoid(x, y) {
             for (var i = 0; i < 2; i++) {
                 newRoid = new Roid();
                 newRoid.pos.x = x;
@@ -405,6 +431,42 @@
                 asteroids.push(newRoid);
                 roidCount++;
             }
+        }
+        //displays a win screen, where a name is entered for high scores.
+        function winScreen() {
+            var name = window.prompt("Enter your initials: ", "");
+            name = name.substr(0, 3);
+
+            ctx.save();
+            ctx.fillStyle = "black";
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.strokeStyle = "white";
+            ctx.fillText("You Won!", 400, 50);
+            var highScores;
+            try {
+                highScores = JSON.parse(localStorage["highScores"])
+            } catch (err) {
+                console.log("failed to parse high scores");
+                highScores = [];
+            }
+
+            highScores.push(playerShip.score);
+            highScores.sort(function (a, b) {
+
+                return b.score - a.score
+            });
+            console.log(highScores.length);
+            highScores = highScores.splice(0, 9);
+            var x = 300,
+                y = 100;
+            for (var i = 0; i < highScores.length; i++) {
+                ctx.fillText(highScores[i], x, y)
+                y += 10;
+            } //stores the new high scores in local storage
+            localStorage["highScores"] = JSON.stringify(highScores);
+
         }
 
         function step() {
@@ -422,15 +484,18 @@
                 asteroids[i].draw();
             }
             ctx.fillStyle = "white";
-            //ctx.fillText(playerShip.facing, 0, 0);
             colCheck();
             if (roidCount == 0) {
-                window.alert("You Win!");
-                location.reload();
+                winState = "w";
             }
             ctx.fillText("Score: " + playerShip.score, 10, 10);
             ctx.restore();
-            window.requestAnimationFrame(step);
+            if (!winState)
+                window.requestAnimationFrame(step);
+            if (winState == "w")
+                winScreen();
+
+
         }
     </script>
 </body>
