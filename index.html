@@ -71,8 +71,8 @@
                 y: 0
             };
             this.shotCount = 0;
-            this.shotCharges = 5;//shot charges decremented by one every time the ship shoots, and are incremented 2 seconds later.
-            this.reloading = false;//used for giving the ship a mandatory cooldown between shots
+            this.shotCharges = 5; //shot charges decremented by one every time the ship shoots, and are incremented 2 seconds later.
+            this.reloading = false; //used for giving the ship a mandatory cooldown between shots
             this.facing = 0;
             this.thrust = 0;
             this.mass = 20;
@@ -106,39 +106,39 @@
                     this.velocity.x = 10;
                 else if (this.velocity.x < -10)
                     this.velocity.x = -10;
-                
+
                 this.pos.x += this.velocity.x;
-                
+
                 //Also caps the ships speed
                 if (this.velocity.y > 10)
                     this.velocity.y = 10;
-                else if(this.velocity.y < -10)
+                else if (this.velocity.y < -10)
                     this.velocity.y = -10;
-                
+
                 this.pos.y += this.velocity.y;
             }
             this.shoot = function () {
                 this.shotCharges--;
                 this.reloading = true;
-                p = new Projectile(this.pos.x, this.pos.y, this.facing, this.shotCount++);//spawns a new projectile based on ship heading
-                playerBodies.push(p);//add the new projectile to an array for drawing/moving
-                setTimeout(function () {//simulates a reload time between shots
+                p = new Projectile(this.pos.x, this.pos.y, this.facing, this.shotCount++); //spawns a new projectile based on ship heading
+                playerBodies.push(p); //add the new projectile to an array for drawing/moving
+                setTimeout(function () { //simulates a reload time between shots
                     playerShip.reloading = false
                 }, 250);
-                setTimeout(function () {//anon function that reloads a shot charge after 2 seconds
+                setTimeout(function () { //anon function that reloads a shot charge after 2 seconds
                     playerShip.shotCharges++;
                 }, 2000);
                 p.startTimer();
             }
         }
-        
+
         //class for the projectiles
         function Projectile(xloc, yloc, heading, shotCount) {
             this.pos = {
                 x: xloc,
                 y: yloc
             };
-            this.id = shotCount;//used for correctly despawing projectiles
+            this.id = shotCount; //used for correctly despawing projectiles
             this.acceleration = 0;
             this.facing = heading;
             this.velocity = {
@@ -205,7 +205,7 @@
             }
 
         }
-
+        //the screen boundary is setup as a safe place to spawn asteroids
         function getSpawnLoc() {
             rand = Math.floor(Math.random() * 5);
             loc = {
@@ -231,7 +231,7 @@
             }
             return loc;
         }
-
+        //draws the small asteroids
         function drawSmallRoid() {
             ctx.save();
             ctx.strokeStyle = "white";
@@ -253,7 +253,7 @@
             ctx.closePath();
             ctx.restore();
         };
-
+        //draws the medium asteroids
         function drawMediumRoid() {
             ctx.save();
             ctx.strokeStyle = "white";
@@ -284,7 +284,7 @@
             ctx.closePath();
             ctx.restore();
         };
-
+        //draws the large asteroids
         function drawLargeRoid() {
             ctx.save();
             ctx.strokeStyle = "white";
@@ -313,7 +313,7 @@
             ctx.closePath();
             ctx.restore();
         };
-
+        //listens for wasd/space presses
         $(document).on("keydown", function () {
             if (event.which == 87) { //w
                 presses[0] = true;
@@ -332,6 +332,7 @@
             }
 
         });
+        //uses keyup to set the associated press boolean to false
         $(document).on("keyup", function () {
             if (event.which == 87) { //w
                 presses[0] = false;
@@ -349,7 +350,9 @@
                 presses[4] = false;
 
         });
-
+        //instead of adding thrust to the ship everytime a keydown event is sent
+        //it is added if a boolean is true. the boolean is set to true when the keydown event fires
+        //and is set to false on the keyup.
         function checkPresses() {
             if (presses[0] == true) {
                 playerShip.thrust = 2;
@@ -368,6 +371,7 @@
                 playerShip.shoot();
         }
 
+        //collision detection is handled here
         function colCheck() {
             var i = j = 0;
             var distX, distY, dist, radSqrd, bool;
@@ -380,12 +384,10 @@
                         distX = playerBodies[i].pos.x - asteroids[j].pos.x;
                         distY = playerBodies[i].pos.y - asteroids[j].pos.y;
                         dist = (distX * distX) + (distY * distY);
+                        //avoid using Math.sqrt by squaring everything, sqrt is too expensive and unnecessary
                         radSqrd = (playerBodies[i].radius + asteroids[j].radius) * (playerBodies[i].radius + asteroids[j].radius);
                         bool = Boolean(dist < radSqrd);
                         if (bool) {
-                            //console.log("col: ");
-                            //console.log(bodies[i]);
-                            //console.log(bodies[j]);
                             if (i == 0) {
                                 winState = "L";
                                 return;
@@ -411,6 +413,7 @@
             }
         }
 
+        //any object type is passed in, determines if it left any side of the screen. If it has, it is moved to the opposide side.
         function boundaryCheck(body) {
 
             if (body.pos.x + body.radius < 0) //make sure the object leaves the LEFT SIDE before moving it
@@ -444,7 +447,7 @@
                 roidCount++;
             }
         }
-        //spawns 2 small asteroids
+        //spawns 2 small asteroids, used on a medium asteroids destruction
         function splodeMediumRoid(x, y) {
             for (var i = 0; i < 2; i++) {
                 newRoid = new Roid();
@@ -457,12 +460,25 @@
             }
         }
 
+        //immitates an arcade game's initial entry screen
+        //3 boxes are drawn and if the player uses the left and right arrows the buttons stroke style is changed to white.
+        //characters are type into each box as one would expect.
         function printBoxes(boxes) {
 
             ctx.save();
             ctx.fillStyle = "black";
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+
+            //
+            ctx.font = "20px Georgia";
+            ctx.textAlign = "left";
+            ctx.fillText("Type your initials (A to Z)", 20, canvas.height * 3 / 4);
+            ctx.fillText("Use arrow keys to select a position", 20, canvas.height * 3 / 4 + 20);
+            ctx.font = "15px Georgia";
+            //ctx.restore();
             ctx.fillStyle = "white";
             ctx.textAlign = "center";
 
@@ -506,10 +522,10 @@
 
 
             ctx.fillText("You Won!", 400, 50);
+            //keydown listener that is bound only during the initials entry screen
             $(document).bind("keydown", function (e) {
                 switch (e.keyCode) {
                 case 13:
-                    console.log("enter");
                     winState = "d";
                     $(document).unbind("keydown");
                     break;
@@ -545,6 +561,7 @@
 
         }
 
+        //gets highscores from browser local storage and prints it in a descending list
         function highScores(boxes) {
             var highScores;
             try {
@@ -553,33 +570,40 @@
                 console.log("failed to parse high scores");
                 highScores = [];
             }
-
-            var score = {
+            //scores are saved as objects, the initials of the player and the score.
+            var newScore = {
                 name: (boxes[0].char + boxes[1].char + boxes[2].char),
                 score: playerShip.score
             }
-            highScores.push(score);
+            console.log(newScore);
+            highScores.push(newScore);
             highScores.sort(function (a, b) {
-
                 return b.score - a.score
             });
+
+            //draws the scores that were retrieved
             ctx.save();
             ctx.fillStyle = "black";
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "white";
+
             ctx.font = "20px Georgia";
-            highScores = highScores.splice(0, 9);
+            highScores = highScores.splice(0, 10);
             ctx.fillText("Highscores", canvas.width / 2, 25);
             var y = 100;
             for (var i = 0; i < highScores.length; i++) {
                 ctx.fillText(i + 1 + ". " + highScores[i].name, canvas.width * 2 / 6, y);
                 ctx.fillText(highScores[i].score, canvas.width * 4 / 6, y);
                 y += 25;
-            } //stores the new high scores in local storage
+                
+            }
+            ctx.strokeStyle = "white";
             ctx.strokeRect(canvas.width / 2 - 50, canvas.height * 2 / 3, 100, 50);
             ctx.fillText("Restart", canvas.width / 2, canvas.height * 2 / 3 + 27);
             ctx.restore();
+
+            //stores the new high scores in local storage
             localStorage["highScores"] = JSON.stringify(highScores);
 
             $("#theCanvas").click(function (e) {
@@ -588,6 +612,7 @@
             });
         }
 
+        //if the player crashes, this screen mocks them, and allows them to restart the game and choose a different difficulty
         function loseScreen() {
             ctx.save();
             ctx.fillStyle = "black";
@@ -609,6 +634,7 @@
             });
         }
 
+        //sets up the game's difficulty. the difficulty variable determines how many asteroids are spawned
         function startScreen() {
             easyButton = {
                 left: (canvas.width / 2 - 50),
@@ -628,6 +654,8 @@
                 top: (canvas.height * 1 / 3) + 120,
                 bottom: (canvas.height * 1 / 3) + 170
             }
+
+            //draws the UI
             ctx.save();
             ctx.fillStyle = "black";
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -641,10 +669,8 @@
             ctx.fillText("Select a difficulty", canvas.width / 2, 150);
             ctx.strokeRect(easyButton.left, easyButton.top, 100, 50);
             ctx.fillText("Easy", canvas.width / 2, canvas.height * 1 / 3 + 27);
-
             ctx.strokeRect(mediumButton.left, mediumButton.top, 100, 50);
             ctx.fillText("Medium", canvas.width / 2, canvas.height * 1 / 3 + 87);
-
             ctx.strokeRect(hardButton.left, hardButton.top, 100, 50);
             ctx.fillText("Hard", canvas.width / 2, canvas.height * 1 / 3 + 147);
             ctx.textAlign = "left";
@@ -653,6 +679,8 @@
             ctx.fillText("A/D: Turn Left/Right", 20, canvas.height * 3 / 4 + 40);
             ctx.fillText("Spacebar: Shoot", 20, canvas.height * 3 / 4 + 60);
             ctx.restore();
+
+            //listens for clicks and checks if the click landed on a button.
             $("#theCanvas").click(function (e) {
                 if (!difficulty) {
                     if (e.offsetX > easyButton.left && e.offsetX < easyButton.right) {
@@ -670,19 +698,19 @@
             });
 
         }
-
+        //the actual game loop
         function step() {
             ctx.save();
             ctx.fillStyle = "black";
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            checkPresses();
-            for (var i in playerBodies) {
+            checkPresses(); //key press listener
+            for (var i in playerBodies) { //moves and draws all projectiles and the ship
                 playerBodies[i].move();
                 playerBodies[i].draw();
                 boundaryCheck(playerBodies[i]);
             }
-            for (var i in asteroids) {
+            for (var i in asteroids) { //moves and draws the asteroids
                 asteroids[i].move();
                 asteroids[i].draw();
                 boundaryCheck(asteroids[i]);
@@ -695,6 +723,9 @@
             }
             ctx.fillText("Score: " + playerShip.score, 10, 10);
             ctx.restore();
+
+            //if they haven't won or lost, continue the loop
+            //otherwise move onto the win or lose screen
             if (!winState)
                 window.requestAnimationFrame(step);
             if (winState == "w")
